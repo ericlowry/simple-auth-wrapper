@@ -2,11 +2,35 @@
 // useAuth() - Authentication/Authorization State Manager
 //
 import { createContext, useContext, useEffect, useState } from 'react';
+import handleFetchResponse from '../lib/handleFetchResponse';
 
 const Ctx = createContext();
 
 // on page load, ensure that we don't have a token
 sessionStorage.setItem('accessToken', '');
+
+function fetchOptions(opts = {}) {
+  const { method = 'GET', body, accessToken } = opts;
+  const options = {
+    method,
+    headers: {
+      'Accept': 'application/json',
+    },
+    mode: 'cors',
+    credentials: 'include',
+  };
+
+  if (accessToken) {
+    options.headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+
+  if (body) {
+    options.headers['Content-Type'] = 'application/json';
+    options.body = JSON.stringify(body);
+  }
+
+  return options;
+}
 
 //
 // Provider
@@ -17,17 +41,15 @@ export const AuthProvider = ({ children }) => {
   const [profile, setProfile] = useState();
 
   useEffect(() => {
-
-    fetch('/auth/session').then( res => {
-      // test results
-      return res.json();
-    }).then( data => {
-      console.log(data);
+    fetch('/auth/session', fetchOptions())
+      .then(handleFetchResponse)
+      .then(data => {
+        console.log(data);
         sessionStorage.setItem('accessToken', data.token);
-        setProfile({ user: data.user});
+        setProfile({ user: data.user, roles: data.roles });
       })
       .catch(err => {
-        if (!(err instanceof HttpUnauthorizedError)) setError(err); // rethrow unexpected errors
+        if (!(err.status === 401)) setError(err); // rethrow unexpected errors
       })
       .finally(() => {
         setIsLoading(false);
@@ -36,24 +58,26 @@ export const AuthProvider = ({ children }) => {
 
   function clearAuthState() {
     setProfile();
-    setSession();
     sessionStorage.setItem('accessToken', '');
   }
 
-  async function localLogin(name, password) {
+  async function login(user, password) {
+    console.log('logging in');
     clearAuthState();
+
     return fetch(
-      '/auth/local/login',
-      fetchOptions({ method: 'POST', body: { name, password } })
+      '/auth/login',
+      fetchOptions({ method: 'POST', body: { user, password } })
     )
-      .then(handleHttpErrors)
-      .then(res => res.json())
+      .then(handleFetchResponse)
       .then(resJSON => {
-        setProfile(resJSON.profile);
-        setSession(resJSON.data);
-        sessionStorage.setItem('accessToken', resJSON.token);
+        // console.log(resJSON);
+        const { user, roles, token } = resJSON;
+        setProfile({ user, roles });
+        sessionStorage.setItem('accessToken', token);
         return true;
-      });
+      })
+      .catch(() => false);
   }
 
   function logout() {
@@ -64,9 +88,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <Ctx.Provider
-      value={{ isLoading, error, profile, session, localLogin, logout }}
-    >
+    <Ctx.Provider value={{ isLoading, error, profile, login, logout }}>
       {children}
     </Ctx.Provider>
   );

@@ -9,9 +9,10 @@ const {
   AUTH_SECRET,
   SESSION_COOKIE_NAME,
   SESSION_DURATION,
+  TOKEN_DURATION,
   ADMIN_USER_NAME,
   ADMIN_PASSWORD,
-  TOKEN_DURATION,
+  ADMIN_ROLES,
 } = require('../config');
 
 const development = process.env.NODE_ENV === 'development';
@@ -50,9 +51,9 @@ router.get('/session', function (req, res, next) {
   }
   const user = session.sub;
   const accessToken = makeToken(user, TOKEN_DURATION, {
-    roles: ['user', 'admin'],
+    roles: ADMIN_ROLES,
   });
-  res.json({ user, token: accessToken });
+  res.json({ user, roles: ADMIN_ROLES, token: accessToken });
 });
 
 //
@@ -74,9 +75,10 @@ router.post('/login', function (req, res, next) {
   res.cookie(SESSION_COOKIE_NAME, sessionToken, cookieOpts);
 
   const accessToken = makeToken(user, TOKEN_DURATION, {
-    roles: ['user', 'admin'],
+    roles: ADMIN_ROLES,
   });
-  res.json({ user, token: accessToken });
+
+  res.json({ user, roles: ADMIN_ROLES, token: accessToken });
 });
 
 //
