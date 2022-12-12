@@ -1,0 +1,19 @@
+{
+  "name": "simple-auth-wrapper",
+  "version": "0.0.1",
+  "description": "Simple auth wrapper for react apps",
+  "main": "./api/bin/www",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ericlowry/simple-auth-wrapper.git"
+  },
+  "author": "Eric Lowry <eric@myrealms.org>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ericlowry/simple-auth-wrapper/issues"
+  },
+  "homepage": "https://github.com/ericlowry/simple-auth-wrapper#readme"
+}
